@@ -1,0 +1,19 @@
+apple=
+OK
+ERROR: Invalid command.
+apple=hello
+OK
+apple=hello
+key2=this is a test
+OK
+apple=hello
+1
+key2=this is a test
+2
+key4=blob
+END
+ERROR: Invalid continuation key.
+apple=hello
+key2=this is a test
+key4=blob
+END

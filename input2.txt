@@ -1,0 +1,13 @@
+?apple
+apple=hello
+?=
+?apple
+key2=this is a test
+list
+key4=blob
+listc 1
+listc 1 1
+listc 1 2
+listc 1 23
+listc 5
+exit

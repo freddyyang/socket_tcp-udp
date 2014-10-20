@@ -1,0 +1,14 @@
+a=1
+?a
+b=2
+c=3
+d=4
+e=5
+list
+listc 2
+listc 2 2
+listc 2 1
+listc 5
+listc 8 2
+help
+exit

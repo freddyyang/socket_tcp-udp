@@ -1,0 +1,447 @@
+
+<!-- saved from url=(0069)http://www.cs.ucsb.edu/~almeroth/classes/F14.176A/hw/f14-176-hw1.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style type="text/css"></style></head><body><h2 align="center">CS176A - HOMEWORK ASSIGNMENT 1<br>
+<strong>Due:  October 19, 2014 (By 11:59pm)</strong></h2><p></p>
+
+<h3>Objectives</h3>
+<ul>
+There are a number of objectives to this assignment. 
+The first is to make sure you have some experience developing a 
+network-based socket 
+application. Second, it will help you "tune up" your programming skills 
+and prepare you for 
+the other upper-division networking courses. Third, because you are 
+allowed to use any 
+references you find on the Internet (including copies of existing 
+        code!), this assignment 
+will help you see just how many network programming aids are available.
+Finally, having just a bit of practical experience will put a lot of the
+protocol concepts 
+we learn into perspective. 
+</ul>
+
+<h3>Assignment Details</h3>
+<ul>
+<b>Basic Operation</b><br>
+<ul>
+The goal of this assignment is to implement a simple client-server system. You can use C/C++, Python or Java.  The system you implement will be a simple
+key-value store.  You client will connect to the server and send a query, which the server will respond to.  For TCP, once a client has connected to the server,
+it should be able to execute multiple commands before closing the socket.  There will be 4 commands supported:  get, put, list, and listc ("listc" will list a
+specified number of items at a time, and allow subsequent calls to get additional items).
+</ul>
+<br>
+<b>Detailed Operation</b><br>
+<ul>
+The server component is started with a port number in the command line as follows:
+<p></p><ul>
+server &lt;port_number&gt;
+</ul><p></p>
+<p>
+From this point, the server is now in its listening mode and waits for connections on the specified port.
+</p><p><br>
+The client component is started with the IP address/hostname of the server, and the port.
+</p><p></p><ul>
+client &lt;address/hostname&gt; &lt;port number&gt;
+</ul><p></p><p>
+When started, the client begins by connecting to the server (for TCP at least, UDP is connectionless!).
+Then the client prompts the user for commands from STDIN, validates each command, and sends them to the server.
+
+</p><p>
+
+<br>
+<b>Supported Commands</b><br>
+
+Commands entered by the user should be in one of the following formats
+</p><ul>
+    <li><code>?<em>key</em></code></li>
+    <li><code><em>key</em>=<em>value</em></code></li>
+    <li><code>list</code></li>
+    <li><code>listc <em>num</em></code></li>
+    <li><code>listc <em>num</em> <em>continuationkey</em></code></li>
+    <li>exit</li>
+    <li>help</li>
+</ul>
+
+<p></p><p>
+
+<br>
+<b>Command Formatting</b><br>
+
+</p><ul>
+    <li>keys cannot contain question marks or equals signs (and to make the UI simpler, no carriage returns or newlines), but anything else is valid</li>
+    <li>values cannot contain carriage returns or newlines, but any other character is valid</li>
+    <li>continuation keys can be any string not containing newlines, spaces, or equal signs, as determined by the server</li>
+</ul>
+<p></p><p>
+After validating the command (checking that it is in one of the above formats), the client should send the command to the server (unless it is help or exit).
+</p><p>
+<b>Keys and values can be arbitrarily large, so your code should be able to handle this</b>. You can expect individual commands/responses to be less than 4GB though, so 32bit integers can hold lengths.
+</p><p>
+The help command should return some helpful message (e.g. the different commands available), but the exact content is up to you.
+
+</p><p>
+<br>
+<b>Server response</b><br>
+
+The server should process the command as follows.
+</p><dl>
+    <dt>?key</dt><dl>respond with "key=value" without the quotes, or "key=" if not set.</dl>
+    <dt>key=value</dt><dl>set value for key and return OK</dl>
+    <dt>list</dt><dl>return all key/value pairs, each on their own line, in the same format as ?key.</dl>
+    <dt>listc num</dt><dl>respond with the first <em>num</em> keys and values, followed by a continuation key (k/v pairs in same format as ?key).</dl>
+    <dt>listc num continuationkey</dt><dl>respond with the first <em>num</em>
+        keys and values AFTER the last set of keys/values, followed by a new
+        continuation key. If the given continuation key is invalid, the server should
+        just return "BAD KEY" without the quotes.</dl>
+</dl>
+
+<p></p><p>
+<br>
+<b>Continuation keys</b><br>
+
+Continuation keys let the client query for part of the key/value list at a time.
+Initially the client calls listc without a
+continuation key, which simply returns the top <em>n</em> elements. Every call
+to listc also returns a key which the client can send back to get
+the next part of the list. This key doesn't have to be interpretable by the
+client, it is only used in the server, however the easiest solution is to use some sort of index.
+See below for examples of this.
+
+</p><p>
+If we have reached the end of the list,
+the continuation key returned should be END, otherwise if can be any
+alphanumeric key.
+
+</p><p>
+If an item is inserted between two calls to listc, it is ok if an item is returned more than once - this case doesn't need special handling, but listc should continue to work and return results without error.
+
+</p><p>
+<br>
+<b>Grading</b><br>
+Upon successful connection (for TCP), the client should only output "Connected." (without the quotes) followed by a newline.
+</p><p>
+There should be no prompt from the client, and the only output should be error messages, OK (for put commands), lists of key=value entries,
+and continuation keys (or END if we have reached the end of the list).
+</p><p>
+When an error occurs, the client/server should print "ERROR: " (without quotes), followed by a description of the error to STDERR. Below are some error messages which should be included.
+If an error means the program must terminate, indicate that with "Terminating." at the end of the error message.
+We will be use scripts for part of the grading, so be sure to follow formatting instructions precisely.
+
+</p><ol>
+    <li>ERROR: Invalid number of args. Terminating.</li>
+    <li>ERROR: Invalid port. Terminating.</li>
+    <li>ERROR: Could not connect to server. Terminating.</li>
+    <li>ERROR: Could not bind port. Terminating.</li>
+    <li>ERROR: Invalid packet from server. Terminating. <em>(This is only printed if the client receives some unexpected packet from the server, and indicates a bug.)</em></li>
+    <li>ERROR: Failed to send message. Terminating.</li>
+    <li>ERROR: Failed to receive message. Terminating.</li>
+    <li>ERROR: Invalid command.</li>
+    <li>ERROR: Invalid continuation key.</li>
+</ol>
+
+<p></p>
+</ul>
+<b>TCP and Reliable UDP</b><br>
+<ul>
+<p>
+You will implement your client and server twice each, once using TCP and once using UDP.
+This means you will be writing four different programs.
+(The clients and servers using TCP and UDP won't be interoperable so you won't be able to use the TCP client with the UDP server and vice versa, though most of the code should be the same.)
+Using TCP should be more straightforward since it has connections, reliability, in-order delivery, etc., however do note that TCP is a stream, thus once the connection is established, all consecutive packets received between reads from the socket will be concatenated together.
+When sending on TCP you are just adding to the tail of the stream, not sending a standalone packet as with UDP.
+You are responsible for making sure you split them up as necessary on the receiving end (e.g. by sending message lengths along with the messages).
+</p><p>
+UDP by itself does not include any of these features, so you will have to add a simple form of reliability. 
+You will do this by applying the stop-and-wait principle. 
+While the following is meant to help you implement stop and wait, it is simply a guide.  Therefore, you will have to make some implementation decisions yourself.  The key is to implement stop-and-wait reliability.
+Please put time into making your implementation of stop-and-wait easy to understand and well documented.
+</p><p>
+The main concept behind stop-and-wait is that after every packet is sent, the sender waits for an ACK (a common abbreviation for an acknowledgment) from the receiver before sending the next packet.
+If the sender does not receive an ACK from the receiver within a timeout window, the sender will resend the packet.
+This method is slow, but easy to implement and easy to debug.
+However, one common problem is that if the ACK itself is lost, the sender will resend the previous packet, while the receiver will think it is the next packet.
+This results in duplicate data being receieved by the receiver.
+This can be fixed by using a single bit counter within each transmission.
+</p><p>
+For instance, say the sender sends the first packet and the receiver ACKs the first packet, but the ACK is never received by the sender.
+Without the counter, the sender would send the first packet again after it times out, but the receiver would believe it to be second packet, as it has already ACKed the first.
+With the 1 bit counter, the sender would tell the receiver that this is still packet0, and the receiver would then know to simply Re-ACK packet0 without saving its contents for a second time.
+Once the sender receives the packet0 ACK, it can then move the counter to 1, and then back to 0 once the second data packet is ACKed, and so on.
+Thus, when the sender resends the first packet, packet0, the receiver would see the count 0 for the second time in a row, and discard the duplicate contents by try to ACK to the sender again.
+Specifically how you place and send the one bit counter as part of your transmission is up to you, but the ACK should contain the word 'ACK' in its contents as well as the counter.
+</p><p>
+For both the TCP and the UDP implementation, the variable length messages have to be handled appropriately.
+This is most easily done by determining the length of the message on the sender's side before transmitting and sending just the length over as a fixed-length packet (perhaps putting the length into 4-bytes) before sending over the rest of the transmission.
+For UDP, the length packet, like any other packet, must be ACKed as well.
+</p><p>
+An example of the UDP client sending the UDP server a message is as follows.
+</p>
+<ol>
+<li> Your client determines the length of the data message. 
+The client then sends this length, as well as the UDP-ACK counter, in a fixed-length fixed-format message to the server.</li>
+<li>The server receives this message, notes the length as how many bytes need to be received, and sends an ACK with the corresponding UDP-ACK counter to the client.</li>
+<li>The client toggles its 1-bit UDP-ACK counter, and then sends the first of n data packets to the server.</li>
+<li>The server receives this message, sends an ACK with the corresponding UDP-ACK counter to the client, and if the UDP-ACK counter differs from the last counter received, the server saves the contents of the message to the buffer and subtracts the bytes received from the bytes remaining.</li>
+<li>The client and server continue to send data and ACKs back and forth until the last packet has been sent and ACKed.</li>
+</ol>
+<p>
+There are a few details that need to be accounted for that don't take part in a 100% successful exchange:
+</p>
+<ul>
+<li>After receiving the length message, the receiver will wait at most 2000ms between packets until the transmission is completed in its entirety. If 2000ms is reached, the connection is considered timed out.</li>
+<li>Similarly, when the sender is sending each segment, including the length segment, it will wait at most 500ms for the corresponding ACK before resending the packet. It will send the packet at most a total of 3 times (the initial send + two retrys).</li>
+<li>If the sender does not receive an ACK for a transmission after the 3rd attempt, it should print '<code>Failed to send message. Terminating.</code>' and exit.</li>
+<li>If the reciever does not receive all the required bytes for a transmission before timing out, it should print '<code>Failed to receive message. Terminating.</code>' and exit.</li>
+</ul>
+<p>
+Lastly, it is possible that the ACK for the final packet is never received by the sender, so the sender is unsure if the receiver got the packet.
+One way to combat this is to have the receiver wait until the 2000ms is elapsed after receiving the last packet to attempt to resend the ACK if it receives a duplicate transmission.
+However, if you do implement this waiting period, you must also code the sender not to transmit any new transmissions during this period.
+</p></ul>
+
+
+     <b><a name="examples">Examples</a></b><br>
+     <ul>
+     <p>
+     Below are some output examples, to help you format your programs display.
+     The format of both the TCP and UDP programs should be the same - that is why we don't have separate examples for TCP and UDP.
+     Since UDP is connectionless however, there is no "Could not connect to server" error.
+     The only other difference between running TCP and UDP programs is going to be the names of the programs to be run (see section "Language Choice and File Names" for naming conventions).
+     </p>
+     <b>Starting the Server</b><br>
+     <ul>
+     Assume you are working on a CSIL machine.
+     You should start the server by issuing a command in a terminal, which syntax should be as follows (see below for correct naming of executables): 
+     <ul>
+     <p>
+     csil-machine1&gt;server 3300</p>
+     </ul>
+     where "server" is the executable for the TCP or UDP program you wrote, and "3300" is the port number you are going to use to establish connection.
+     <p>
+     </p></ul>
+     <h4><span>Client Input/Output Example</span></h4>
+     <ul>
+     Assume you are working on a CSIL machine. The text entered by the user is in bold, normal text is output by the client
+     You should start the client by issuing the following command in a terminal (see below for correct naming of executables):
+         <p>
+
+          </p><ul>
+          csil-machine2&gt; client gizmo.cs.ucsb 3300 
+          <br>ERROR: Could not connect to server. Terminating.
+          <br>csil-machine2&gt; 
+          <br>
+          </ul>
+          <br>or
+          <br>
+          <ul>
+          <br>csil-machine2&gt; client 128.163.7.19 99999 
+          <br>ERROR: Invalid port. Terminating.
+          <br>csil-machine2&gt; 
+          </ul>
+          <br>
+          <br> or
+          <br>
+          <ul>
+          <br>csil-machine2&gt; client 128.163.7.19 3300 Optimus
+          <br>Connected.
+          <br><b>?apple</b>
+          <br>apple=
+          <br><b>apple=hello</b>
+          <br>OK
+          <br><b>?=</b>
+          <br>ERROR: Invalid command.
+          <br><b>?apple</b>
+          <br>apple=hello
+          <br><b>key2=this is a test</b>
+          <br>OK
+          <br><b>list</b>
+          <br>apple=hello
+          <br>key2=this is a test
+          <br><b>key4=blob</b>
+          <br>OK
+          <br><b>listc 1</b>
+          <br>apple=hello
+          <br>1
+          <br><b>listc 1 1</b>
+          <br>key2=this is a test
+          <br>2
+          <br><b>listc 1 2</b>
+          <br>key4=blob
+          <br>END
+          <br><b>listc 1 23</b>
+          <br>ERROR: Invalid continuation key.
+          <br><b>exit</b>
+          <br>csil-machine2&gt; 
+          </ul>
+          <br>
+          <p></p>
+          </ul>
+          </ul>
+          <h4><span>Language Choice and File Names</span></h4>
+          <ul>
+
+          You will choose C/C++, Python, or Java for this assignment. 
+	  <p>
+          While the code should run by itself using the command line options given above, 
+
+          <a href="http://www.cs.ucsb.edu/~almeroth/classes/F14.176A/hw/scripts/">
+I have prepared a set of compile and run shell scripts for each of the four languages. 
+The scripts, found in the directory labelled for the language you are using, are client_tcp.sh, client_udp.sh, server_tcp.sh, and server_udp.sh.</a>
+          Using the default file names listed below, they build and run your programs.
+          These scripts are designed to make grading easier.
+          Before turning in, please copy the run scripts for your language into your project directory, and ensure that the scripts can properly build and run your project.
+          If they do not, then you are likely using more than the 4 basic files required, and you will need to modify the scripts.
+          This is fine, and is why I have included the scripts - so long as the input/output and overall function of the scripts remains unchanged, you are welcome to change them to properly compile and run your project (and must if they don't work without change!).
+          Regardless of whether or not you modify the scripts, please do turnin the four scripts that work for your project with your language of choice.
+          </p><p>
+
+          For C, the programs should be:
+
+          </p><ul type="disc"><ul type="circle"><li class="MsoNormal"><span>Client
+          in C using TCP: client_c_tcp.c </span></li>
+          <li class="MsoNormal"><span>Server in C using TCP: server_c_tcp.c </span></li>
+          <li class="MsoNormal"><span>Client in C using UDP: client_c_udp.c </span></li>
+          <li class="MsoNormal"><span>Server in C using UDP: server_c_udp.c </span></li></ul></ul>
+
+          <p>To compile your C code, use the following four commands: </p>
+
+          <ul type="disc"><ul type="circle"><li class="MsoNormal"><span>"<i>gcc -g
+          -o client_c_tcp client_c_tcp.c</i>" </span></li>
+          <li class="MsoNormal"><span>"<i>gcc -g -o server_c_tcp server_c_tcp.c</i>"
+          </span></li>
+          <li class="MsoNormal"><span>"<i>gcc -g -o client_c_udp client_c_tcp.c</i>"
+          </span></li>
+          <li class="MsoNormal"><span>"<i>gcc -g -o server_c_udp server_c_tcp.c</i>"
+          </span></li></ul></ul>
+          <br>
+          For C++, the programs should be:
+
+          <p></p><ul type="disc"><ul type="circle"><li class="MsoNormal"><span>Client
+          in C++ using TCP: client_cpp_tcp.cpp </span></li>
+          <li class="MsoNormal"><span>Server in C++ using TCP: server_cpp_tcp.cpp </span></li>
+          <li class="MsoNormal"><span>Client in C++ using UDP: client_cpp_udp.cpp </span></li>
+          <li class="MsoNormal"><span>Server in C++ using UDP: server_cpp_udp.cpp </span></li></ul></ul>
+
+          <p>To compile your C++ code, use the following four commands: </p>
+
+          <ul type="disc"><ul type="circle"><li class="MsoNormal"><span>"<i>g++ -g
+          -lstdc++ -o client_cpp_tcp client_cpp_tcp.cpp</i>" </span></li>
+          <li class="MsoNormal"><span>"<i>g++ -g -lstdc++ -o server_cpp_tcp server_cpp_tcp.cpp</i>"
+          </span></li>
+          <li class="MsoNormal"><span>"<i>g++ -g -lstdc++ -o client_cpp_udp client_cpp_tcp.cpp</i>"
+          </span></li>
+          <li class="MsoNormal"><span>"<i>g++ -g -lstdc++ -o server_cpp_udp server_cpp_tcp.cpp</i>"
+          </span></li></ul></ul>
+
+          <p>For Java, the program names should be:</p>
+
+          <ul type="disc"><ul type="circle"><li class="MsoNormal"><span>Client in 
+          Java using TCP: client_java_tcp.java </span></li>
+          <li class="MsoNormal"><span>Server in Java using TCP: 
+          server_java_tcp.java </span></li>
+          <li class="MsoNormal"><span>Client in Java using UDP: 
+          client_java_udp.java </span></li>
+          <li class="MsoNormal"><span>Server in Java using UDP: 
+          server_java_udp.java </span></li></ul></ul>
+
+          <p>To compile your Java code, use the following commands:</p>
+
+          <ul type="disc"><ul type="circle"><li class="MsoNormal"><span>"<i>javac 
+          client_java_tcp.java</i>" </span></li>
+          <li class="MsoNormal"><span>"<i>javac server_java_tcp.java</i>" </span></li>
+          <li class="MsoNormal"><span>"<i>javac client_java_udp.java</i>" </span></li>
+          <li class="MsoNormal"><span>"<i>javac server_java_udp.java</i>" </span></li></ul></ul>
+
+          <p>For Python, the program names should be:</p>
+
+          <ul type="disc"><ul type="circle"><li class="MsoNormal"><span>Client in 
+          Python using TCP: client_python_tcp.py </span></li>
+          <li class="MsoNormal"><span>Server in Python using TCP: 
+          server_python_tcp.py </span></li>
+          <li class="MsoNormal"><span>Client in Python using UDP: 
+          client_python_udp.py </span></li>
+          <li class="MsoNormal"><span>Server in Python using UDP: 
+          server_python_udp.py </span></li></ul></ul>
+
+          <p>To run your Python code, use the following commands:</p>
+
+          <ul type="disc"><ul type="circle"><li class="MsoNormal"><span>"<i>python
+          client_python_tcp.py</i>" </span></li>
+          <li class="MsoNormal"><span>"<i>python server_python_tcp.py</i>" </span></li>
+          <li class="MsoNormal"><span>"<i>python client_python_udp.py</i>" </span></li>
+          <li class="MsoNormal"><span>"<i>python server_python_udp.py</i>" </span></li></ul></ul>
+
+          <p>NOTE:
+          Pay attention to all of these directions carefully and make sure that the scripts run properly and are turned in with your assignment, and that you format your messages as specified in the assignment. 
+          An                                                                                    automated
+          program will be used for grading and if there are any deviations, you 
+          will lose
+          points! (There is a CS176A-related point to this note as well: as you
+                  will learn, protocols are absolutely precise, there can be no deviation
+                  in syntax. Programming this assignment is straightforward, but those
+                  who earn a 100 will have followed the directions to the letter.) </p>
+          </ul>
+          </ul>
+
+          <h3><span>Grading Guidelines </span></h3>
+          <ul>
+          You
+          may use pieces of code from the Internet to help you do this assignment
+          (e.g. basic socket code). However, this is just like citing a passage
+          from a book, so if you copy code, you <b>must</b> cite it. To do this,
+          put a comment at the beginning of your code that explains exactly what
+          you have copied, who originally wrote it, and where it came from (likely the URL of a web site, but it could be a book reference, etc.). <p></p><p>Below
+          is
+          a breakdown of points for this assignment. In addition to
+          correctness, part of the points count towards how well code is written
+          and documented. NOTE: good code/documentation does not imply that more
+          is better. The goal is to be efficient, elegant and succinct! The approximate point breakdown is below. </p>
+
+          <ul type="disc"><ul type="circle"><li class="MsoNormal"><span>35 pts: Clients (TCP and Reliable UDP)</span></li>
+          <li class="MsoNormal"><span>45 pts: Servers (TCP and Reliable UDP)</span></li>
+          <li class="MsoNormal"><span>20 pts: Documentation/Proper References </span></li></ul></ul>
+
+          <p>An assignment in C/C++ will be awarded up to 10 extra points (because of 
+                  the greater challenge in the C-code socket syntax). </p>
+          </ul>
+
+          <h3><span>Final Warning</span></h3>
+          <ul>
+          This is
+          an assignment you definitely want to start on early. Also, instead of
+          assuming things should be done a
+          particular way, <b>ask questions</b>! Michael (dagun@cs.ucsb.edu) will
+          be leading the grading for this assignment, so grading related
+          questions should be directed to him (or see syllabus for office hours).
+          Answers that are relevant to
+          everyone in class will be posted on the Gauchospace message board (which
+                  will then be emailed to everyone).
+          <p>
+          </p></ul>
+
+          <h3><span>Assignment Turnin</span></h3>
+          <ul>
+          The assignment should be submitted using the course Gauchospace web site. 
+          Because the
+          web site only allows one file to be submitted, you should use a
+          commonly available tool (tar or zip) to combine your set of files into a
+          single file.<p></p>
+
+          Note:  The assignment is due on October 19th at 11:59pm.  The turnin
+          time on GauchoSpace is set to 12:00am on October 20th.  Do not be
+          confused by this 1 minute difference.  In the end, remember that the
+          assignment is due at the end of the day on the 19th (not the 20th).
+          </ul>
+
+          <h3><span>Cheating Policy </span></h3>
+          <ul>
+          <b>This assignment is to be done individually.</b> Cheating will not be 
+          tolerated. Please read the <a href="http://charm.physics.ucsb.edu/people/hnn/conduct/cam_reg_stud_a.html"><i>UCSB
+          Academic Code of Conduct</i></a>
+          to find out more about Student Conduct and Discipline. Of particular
+          relevance to this assignment is the need to properly cite material you
+          have used. Failure to do so constitutes plagiarism. <p></p>
+          </ul>
+          
+</body></html>
