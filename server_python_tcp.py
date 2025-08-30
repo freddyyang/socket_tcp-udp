@@ -1,6 +1,3 @@
-# ===== Name:  Freddy Yang =====
-# ===== Perm#: 5516836 ===
-# ===== CS176a HW1 ======
 # ***** TCP_SERVER ******
 # ===== Referrence from: 1> http://www.binarytides.com/python-socket-server-code-example/
 #                        2> http://www.tutorialspoint.com/python/python_networking.htm
