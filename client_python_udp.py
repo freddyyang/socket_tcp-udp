@@ -1,6 +1,3 @@
-# ===== Name:  Freddy Yang =====
-# ===== Perm#: 5516836 ===
-# ===== CS176a HW1 ======
 # ***** UDP_CLIENT ******
 # ===== Referrence from: 1> http://www.binarytides.com/python-socket-server-code-example/
 #                        2> https://www.youtube.com/watch?v=vNVMlXLGrTE
